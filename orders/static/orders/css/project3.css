@@ -8594,4 +8594,44 @@ h6 {
   padding: 0 10px;
 }
 
+/* Menu Items */
+.menu-item {
+  cursor: pointer;
+}
+
+/* Popup Container */
+#popup-message-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(34, 36, 53, 0.25);
+  opacity: 0;
+  z-index: -1;
+  transition: 0.5s;
+}
+
+#popup-message {
+  background-color: #f7f5ef;
+}
+
+#popup-message-close {
+  cursor: pointer;
+}
+
+/* Shopping Cart Navbar */
+.shopping-cart-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 48px;
+  width: 100%;
+}
+
+#shopping-cart-icon {
+  cursor: pointer;
+  height: 32px;
+}
+
 /*# sourceMappingURL=project3.css.map */

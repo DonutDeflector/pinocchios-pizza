@@ -2,5 +2,30 @@
 
 {% block title %} Order {% endblock %}
 
+{% block body %}
 <div class="container">
+  <a href="{% url 'logout' %}">Logout</a>
+  <div class="menu">
+  {% for category in categories %}
+    <h2>{{ category }}</h2>
+    <ul>
+    {% for item in items %}
+      {% if item.category == category %}
+        <li class="menu-item" data-item_id="{{ item.id }}">
+          {{ item }} -
+          {{ item.size }} -
+          ${{ item.price }}
+        </li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+  {% endfor %}
+  </div>
+  
+  {% include "orders/includes/message.html" %}
+  {% include "orders/includes/shopping-cart-navbar.html" %}
 </div>
+
+{% include "orders/includes/current_user_id.html" %}
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "orders/layouts/default.html" %}
+
+{% block title %} Orders {% endblock %}
+
+{% block body %}
+<div class="container">
+  <div id="shopping-cart-container">
+    <div class="shopping-cart">
+      <tr>
+        <th>Item</th>
+        <th>Category</th>
+        <th>Size</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Action</th>
+      </tr>
+      {% for item in items %}
+      <tr data-name="{{ item_id }}">
+        <th>{{ item }}</th>
+        <th>{{ category }}</th>
+        <th>{{ size }}</th>
+        <th>{{ price }}</th>
+        <th>Action</th>
+      </tr>
+      {% endfor %}
+    </div>
+  </div>
+  
+  {% include "orders/includes/message.html" %}
+  {% include "orders/includes/shopping-cart-navbar.html" %}
+</div>
+
+  {% include "orders/includes/current_user_id.html" %}
+
+{% endblock %}

@@ -4,6 +4,36 @@
 
 {% block body %}
 <div class="container">
-  <h1>Register</h1>
+  <div class="card">
+    <div class="card-body">
+      {% include "orders/includes/message.html" %}
+      <h1 card="card-title">Register</h1>
+      <form action="{% url 'register' %}" method="post">
+        {% csrf_token %}
+        <label for="first-name">First Name</label>
+        <input name="first-name" type="first_name" class="form-control"
+        id="first-name-input" placeholder="first name">
+        <label for="last-name">Last Name</label>
+        <input name="last-name" type="last-name" class="form-control"
+        id="last-name-input" placeholder="last name">
+        <label for="username">Username</label>
+        <input name="username" type="username" class="form-control"
+        id="username-input" placeholder="username">
+        <label for="email">Email</label>
+        <input name="email" type="email" class="form-control"
+        id="email-input" placeholder="email@example.com">
+        <label for="password">Password</label>
+        <input name="password" type="password" class="form-control"
+        id="password-input" placeholder="password">
+        </input>
+        <label for="confirm-password">Confirm Password</label>
+        <input name="confirm-password" type="password" class="form-control"
+        id="password-input" placeholder="confirm password">
+        </input>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+      <span>Already have an account? <a href="{% url 'login' %}">Login</a></span>
+    </div>
+  </div>
 </div>
 {% endblock %}
