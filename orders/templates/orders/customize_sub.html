@@ -1,0 +1,41 @@
+{% extends "orders/layouts/default.html" %}
+
+{% block title %} Customize Sub {% endblock %}
+
+{% block body %}
+<div class="container">
+  <form id="sub-form">
+    <div class="form-group">
+      <label for="sub-name">Sub Name</label>
+        <select name="sub-name" class="form-control" id="sub-name">
+          {% for sub_name in sub_names %}
+          <option>{{ sub_name }}</option>
+          {% endfor %}
+        </select>
+      <label for="sub-size">Sub Size</label>
+        <select name="sub-size" class="form-control" id="sub-size">
+          <option>Small</option>
+          <option>Large</option>
+        </select>
+      <div class="sub-addons">
+        {% for addon in addons %}
+          <div class="custom-control custom-checkbox">
+            <input value="{{ addon }}" type="checkbox" class="sub-addon
+            custom-control-input" id="{{ addon }}">
+            <label class="custom-control-label" for="{{ addon }}">
+              {{ addon }}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="sub-submit-button-container">
+        <button id="sub-submit-button" type="button">Add to Cart</button>
+      </div>
+    </div>
+  </form>
+
+  {% include "orders/includes/message.html" %}
+  {% include "orders/includes/shopping-cart-navbar.html" %}
+</div>
+
+{% endblock %}

@@ -1,13 +1,20 @@
 from django import forms
 from django.contrib import admin
-from .models import Category, Item, Size, Extra, AddOn, ShoppingCart
+from .models import Category, Item, Size, Extra, ShoppingCart
 
 # Register your models here.
-admin.site.register(Category)
 admin.site.register(Size)
 
 
-class CustomItemChoiceField(forms.ModelChoiceField):
+class CategoryForm(admin.ModelAdmin):
+    list_display = ["name", "customizeable"]
+    search_fields = ["name"]
+
+
+admin.site.register(Category, CategoryForm)
+
+
+class CustomItemChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         name = "Name: " + str(obj)
         category = "Category: " + str(obj.category)
@@ -26,6 +33,12 @@ class ExtraAdminForm(forms.ModelForm):
         model = Item
         fields = "__all__"
 
+    # makes items form field an un-required field
+    # https://stackoverflow.com/a/24045492
+    def __init__(self, *args, **kwargs):
+        super(ExtraAdminForm, self).__init__(*args, **kwargs)
+        self.fields["items"].required = False
+
 
 class ExtraAdmin(admin.ModelAdmin):
     list_display = ["name", "get_categories", "get_items", "price"]
@@ -37,19 +50,11 @@ admin.site.register(Extra, ExtraAdmin)
 
 
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ["name", "category", "size", "price"]
+    list_display = ["name", "category", "size", "extras_number", "price"]
     search_fields = ["name"]
 
 
 admin.site.register(Item, ItemAdmin)
-
-
-class AddOnAdmin(admin.ModelAdmin):
-    list_display = ["name", "price"]
-    search_fields = ["name"]
-
-
-admin.site.register(AddOn, AddOnAdmin)
 
 
 class ShoppingCartAdmin(admin.ModelAdmin):

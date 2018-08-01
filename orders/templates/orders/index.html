@@ -9,15 +9,29 @@
   {% for category in categories %}
     <h2>{{ category }}</h2>
     <ul>
-    {% for item in items %}
-      {% if item.category == category %}
-        <li class="menu-item" data-item_id="{{ item.id }}">
-          {{ item }} -
-          {{ item.size }} -
-          ${{ item.price }}
-        </li>
-      {% endif %}
-    {% endfor %}
+    {% if category.customizeable == True %}
+      <li class="menu-cutomizeable-order" data-category-id="{{ category.id }}">
+        {% if "Pizza" in category.name %}
+          <a href="{% url 'customize_pizza' %}">
+            Customize Order
+          </a>
+        {% else %}
+          <a href="{% url 'customize_sub' %}">
+            Customize Order
+          </a>
+        {% endif %}
+      </li>
+    {% else %}
+      {% for item in items %}
+        {% if item.category == category %}
+          <li class="menu-item" data-item_id="{{ item.id }}">
+            {{ item }} -
+            {{ item.size }} -
+            ${{ item.price }}
+          </li>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
     </ul>
   {% endfor %}
   </div>
