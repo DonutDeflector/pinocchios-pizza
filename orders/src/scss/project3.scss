@@ -20,6 +20,7 @@ $font-family-base: "Encode Sans Semi Condensed", sans-serif;
 
 /* Document */
 
+html,
 body {
   margin: 0;
 }
@@ -44,7 +45,21 @@ h6 {
 
 .container {
   max-width: 1440px;
-  padding: 0 10px;
+  padding: 0 10px 70px;
+  margin-top: 70px;
+}
+
+.full-height {
+  min-height: 100vh;
+  height: 100%;
+  margin: auto !important;
+  padding: 0 10px !important;
+}
+
+/* Navbar */
+
+.navbar-brand {
+  font-weight: 700;
 }
 
 /* Menu Items */
@@ -53,14 +68,18 @@ h6 {
   cursor: pointer;
 }
 
+.category-title {
+  font-size: 24px;
+}
+
 /* Popup Container */
 
 #popup-message-container {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba($dark, 0.25);
   opacity: 0;
   z-index: -1;
@@ -69,6 +88,7 @@ h6 {
 
 #popup-message {
   background-color: $light;
+  min-width: 280px;
 }
 
 #popup-message-close {

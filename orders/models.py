@@ -73,6 +73,9 @@ class ShoppingCart(models.Model):
                              blank=True, null=True, max_length=256)
     custom_items = JSONField(null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "Shopping Carts"
+
     def append_item(self, item_id):
         # if items list already exists, append to the list
         if self.items != None:
@@ -169,19 +172,22 @@ class ShoppingCart(models.Model):
             return len(items.split(",")) + len(custom_items)
 
 
-class OrderStatus(models.Model):
-    name = models.CharField(max_length=64)
-
-    class Meta:
-        verbose_name_plural = "order statuses"
-
-    def __str__(self):
-        return f"{self.name}"
-
-
 class Order(models.Model):
     username = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     items = models.CharField(validators=[validate_comma_separated_integer_list],
                              blank=True, null=True, max_length=256)
     custom_items = JSONField(null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True, null=True)
+
+
+class OrderHistory(models.Model):
+    username = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    items = models.CharField(validators=[validate_comma_separated_integer_list],
+                             blank=True, null=True, max_length=256)
+    custom_items = JSONField(null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Order Histories"

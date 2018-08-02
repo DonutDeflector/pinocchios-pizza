@@ -4,9 +4,11 @@
 
 {% block body %}
 <div class="container">
-  <h2>{{ title }}</h2>
-  <p>{{ message }}</p>
-  <a href="{% url 'index' %}">Return to Menu</a>
+  <div class="alert alert-primary" role="alert">
+    <h2>{{ title }}</h2>
+    <p>{{ message }}</p>
+    <a href="{% url 'index' %}">Return to Menu</a>
+  </div>
 </div>
 
 {% endblock %}

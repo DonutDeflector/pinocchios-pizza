@@ -3,6 +3,9 @@
 {% block title %} Order {% endblock %}
 
 {% block body %}
+
+  {% include "orders/includes/navbar.html" %}
+
 <div class="container">
   <h2>Order Summary</h2>
   <p>Please take a moment to review your order before placing it.</p>
@@ -11,8 +14,6 @@
   
   <h4>Total: ${{ total_price }}</h4>
   
-  <div class="order-button-container">
-    <button id="order-button">Place Order</button>
-  </div>
+  {% include "orders/includes/place_order_button.html" %}
 </div>
 {% endblock %}

@@ -3,13 +3,10 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as logout_request
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse
-from django.db.models import Q
+from .models import Category, Item, ShoppingCart, Extra, Order, OrderHistory
 
-from .models import Category, Item, ShoppingCart, Extra, Order
-
-from operator import and_
-from functools import reduce
 from decimal import Decimal
 
 import json
@@ -44,7 +41,11 @@ def login(request):
         else:
             return render(request, "orders/login.html",
                           {"message": "Invalid credentials."})
-    return render(request, "orders/login.html")
+
+    if request.user.is_authenticated:
+        return redirect("index")
+    else:
+        return render(request, "orders/login.html")
 
 
 def register(request):
@@ -84,6 +85,9 @@ def register(request):
         else:
             return render(request, "orders/register.html",
                           {"message": "Passwords don't match."})
+
+    if request.user.is_authenticated:
+        return redirect("index")
     else:
         return render(request, "orders/register.html")
 
@@ -162,7 +166,7 @@ def add_pizza_to_cart(request):
         pizza["name"] = str(pizza_object.name)
         pizza["category"] = str(pizza_object.category)
         pizza["size"] = str(pizza_object.size)
-        pizza["price"] = "{:.2f}".format(pizza_object.price)
+        pizza["price"] = "{0:.2f}".format(pizza_object.price)
         pizza["pizza_toppings"] = pizza_toppings
 
         # fetch shopping cart of the current user
@@ -199,7 +203,6 @@ def customize_sub(request):
 
         # fetch the sub addons
         sub_addons = data["sub_addons"]
-        print(sub_addons)
 
         # create dict to store sub properties
         sub = {}
@@ -208,28 +211,28 @@ def customize_sub(request):
         sub["name"] = str(sub_object.name)
         sub["category"] = str(sub_object.category)
         sub["size"] = str(sub_object.size)
-        sub["price"] = "{:.2f}".format(sub_object.price)
+        sub["price"] = "{0:.2f}".format(sub_object.price)
         sub["sub_addons"] = sub_addons
 
-        # fetch name of sub
-        sub_name = data["sub_name"]
+        # create list to capture prices of addons
+        addon_total = []
 
-        # declare addon total in anticipation
-        addon_total = None
+        # fetch all extras and turn the QuerySet into a list
+        extras = Extra.objects.all()
+        list(extras)
 
         # fetch the prices of the sub's custom addons
-        for sub_addon in sub_addons:
-            print(Extra.objects.filter(categories__name=sub_name))
+        for extra in extras:
+            for sub_addon in sub_addons:
+                if (sub_addon in extra.name):
+                    addon_price = Decimal(extra.price)
+                    addon_total.append(addon_price)
 
-        # add the prices of the addons into the base price of the sub
+        # add the prices of the addons together and add them to sub's base price
+        addon_total = sum(addon_total)
+        sub_price = sub_price + addon_total
 
-        # fetch the quantity and total price of items in the cart
-        quantity = get_quantity(request)
-        total_price = get_total_price(request)
-
-        return JsonResponse({"quantity": quantity,
-                             "total_price": total_price,
-                             "sub_price": sub_price})
+        return JsonResponse({"sub_price": sub_price})
 
     # for get requests, generate the sub customization form
     else:
@@ -242,8 +245,9 @@ def customize_sub(request):
         # turn the QuerySet into a list while stripping the dict keys
         sub_names = [sub_name["name"] for sub_name in sub_names]
 
-        # remove duplicate names from the list
+        # remove duplicate names from the list and order alphabetically
         sub_names = set(sub_names)
+        sub_names = sorted(sub_names)
 
         # fetch all extras and turn the QuerySet into a list
         extras = Extra.objects.all()
@@ -284,21 +288,50 @@ def sub_addons(request):
         extras = Extra.objects.all()
         list(extras)
 
-        # set list in anticipation for generic addons
+        # set list in anticipation for fetching sub addons
         addons = []
 
-        # fetch generic addons from extras
+        # fetch generic and custom addons
         for extra in extras:
+            # find generic addons
             if "Subs" in extra.get_categories():
                 addon = extra.name
                 addons.append(addon)
 
-        # add custom addons to addons list
-        # addons.extend(sub_custom_addons)
+            # take items output, make it into a list, and remove dupes done in
+            # preparation for finding custom addons
+            items = extra.get_items().split(", ")
+            items = list(items)
+            items = set(items)
+
+            # find custom addons
+            if sub_name in items:
+                addon = extra.name
+                addons.append(addon)
 
         return JsonResponse({"sub_addons": addons})
     else:
-        return HttpResponseForbidden
+        return HttpResponseForbidden()
+
+
+def sub_sizes(request):
+    if request.method == "POST":
+        # capture ajax request data
+        data = json.loads(request.body)
+
+        # extract sub name
+        sub_name = data["sub_name"]
+
+        # fetch sub with corresponding name
+        sub_object = Item.objects.filter(name=sub_name).first()
+
+        # see if size value for the sub exists
+        if (sub_object.size):
+            sub_sizes = True
+        else:
+            sub_sizes = False
+
+        return JsonResponse({"sub_sizes": sub_sizes})
 
 
 def add_sub_to_cart(request):
@@ -322,7 +355,7 @@ def add_sub_to_cart(request):
         sub["name"] = str(sub_object.name)
         sub["category"] = str(sub_object.category)
         sub["size"] = str(sub_object.size)
-        sub["price"] = "{:.2f}".format(sub_object.price)
+        sub["price"] = "{0:.2f}".format(sub_object.price)
         sub["sub_addons"] = sub_addons
 
         # fetch all extras and turn the QuerySet into a list
@@ -335,7 +368,7 @@ def add_sub_to_cart(request):
                 if sub_addon in extra.name:
                     price = Decimal(sub["price"])
                     price = price + extra.price
-                    sub["price"] = price
+                    sub["price"] = "{0:.2f}".format(price)
 
         # fetch shopping cart of the current user
         shopping_cart = fetch_shopping_cart(current_user)
@@ -422,7 +455,7 @@ def shopping_cart_items(request):
         return JsonResponse({"quantity": quantity,
                              "total_price": total_price})
     else:
-        return HttpResponse(403)
+        return HttpResponseForbidden()
 
 
 def add_item_to_cart(request):
@@ -470,11 +503,7 @@ def remove_item_from_cart(request):
     shopping_cart.remove_item(item_number, item_type)
     shopping_cart.save()
 
-    # get quantity and total price of items in cart
-    quantity = get_quantity(request)
-    total_price = get_total_price(request)
-
-    return JsonResponse({"quantity": quantity, "total_price": total_price})
+    return JsonResponse({"success": True})
 
 
 def order(request):
@@ -543,8 +572,13 @@ def submit_order(request):
     # get user's cart
     shopping_cart = fetch_shopping_cart(current_user)
 
-    # copy shopping cart contents to orders
+    # copy shopping cart contents to orders and order history
     order = Order.objects.create(
+        username=current_user, items=shopping_cart.items,
+        custom_items=shopping_cart.custom_items)
+    order.save()
+
+    order = OrderHistory.objects.create(
         username=current_user, items=shopping_cart.items,
         custom_items=shopping_cart.custom_items)
     order.save()
@@ -554,7 +588,140 @@ def submit_order(request):
 
     return render(request, "orders/message.html",
                   {"title": "Success!",
-                   "message": "Order has been placed!"})
+                   "message": "Order has been placed! Thanks for choose 'Nochs!"})
+
+
+@user_passes_test(lambda u: u.is_staff, login_url=('login'))
+def view_orders(request):
+    # fetch all orders
+    order_objects = Order.objects.all()
+
+    # create list to insert orders into
+    orders = []
+
+    # fetch information of static items; extract properties of each order, put
+    # them in a dict, and add them to the list
+    for order_object in order_objects:
+
+        # if order has static item objects
+        if order_object.items != None:
+            # get all of the item ids in the cart
+            item_id_list = order_object.items
+            item_id_list = item_id_list.split(",")
+
+            # create array to contain items and their properties
+            items = []
+
+            # get properties of all items in the cart and add them to a list
+            for item_id in item_id_list:
+                # create dict to store item properties in
+                item_dict = {}
+
+                # get item properties
+                item = Item.objects.get(pk=item_id)
+
+                # add properties to item dict
+                item_dict["id"] = item.id
+                item_dict["name"] = item.name
+                item_dict["category"] = str(item.category)
+                item_dict["size"] = str(item.size)
+                item_dict["price"] = str(item.price)
+
+                # add item dict to items array
+                items.append(item_dict)
+
+            # sort items by name
+            items.sort(key=operator.itemgetter("name"))
+        else:
+            items = None
+
+        # create dict to store order properties in
+        order = {}
+
+        # extract order properties
+        order["username"] = order_object.username
+        order["items"] = items
+        order["custom_items"] = order_object.custom_items
+        order["submitted_at"] = order_object.submitted_at.strftime(
+            "%Y-%m-%d %I:%M:%S %p")
+
+        # add order dict to the orders list
+        orders.append(order)
+
+    context = {
+        "orders": orders
+    }
+
+    return render(request, "orders/view_orders.html", context)
+
+
+def order_history(request):
+    # check to see if user is logged in
+    authentication_check(request)
+
+    # get current user
+    current_user = request.user
+
+    # fetch orders with the user's name
+    order_objects = OrderHistory.objects.filter(username=current_user)
+
+    # create list to insert orders into
+    orders = []
+
+    # fetch information of static items; extract properties of each order, put
+    # them in a dict, and add them to the list
+    for order_object in order_objects:
+
+        # if order has static item objects
+        if order_object.items != None:
+            # get all of the item ids in the cart
+            item_id_list = order_object.items
+            item_id_list = item_id_list.split(",")
+
+            # create array to contain items and their properties
+            items = []
+
+            # get properties of all items in the cart and add them to a list
+            for item_id in item_id_list:
+                # create dict to store item properties in
+                item_dict = {}
+
+                # get item properties
+                item = Item.objects.get(pk=item_id)
+
+                # add properties to item dict
+                item_dict["id"] = item.id
+                item_dict["name"] = item.name
+                item_dict["category"] = str(item.category)
+                item_dict["size"] = str(item.size)
+                item_dict["price"] = str(item.price)
+
+                # add item dict to items array
+                items.append(item_dict)
+
+            # sort items by name
+            items.sort(key=operator.itemgetter("name"))
+        else:
+            items = None
+
+        # create dict to store order properties in
+        order = {}
+
+        # extract order properties
+        order["username"] = order_object.username
+        order["items"] = items
+        order["custom_items"] = order_object.custom_items
+        order["submitted_at"] = order_object.submitted_at.strftime(
+            "%Y-%m-%d %I:%M:%S %p")
+
+        # add order dict to the orders list
+        orders.append(order)
+
+    context = {
+        "orders": orders
+    }
+
+    return render(request, "orders/order_history.html", context)
 
 ####################
 # helper functions #
@@ -574,9 +741,9 @@ def get_total_price(request):
     if ShoppingCart.objects.filter(username=current_user):
         shopping_cart = ShoppingCart.objects.get(username=current_user)
         total_price = shopping_cart.get_total_price()
-    # else return 0
+    # else return a default value
     else:
-        total_price = 0
+        total_price = "0.00"
 
     return total_price
 
@@ -611,9 +778,15 @@ def fetch_sub_item(data):
     sub_name = data["sub_name"]
     sub_size = data["sub_size"]
 
-    # sort to find the correct item entry for the sub
-    sub_object = Item.objects.filter(name=sub_name).get(
-        size__name__contains=sub_size)
+    # sort to find items that match the name of the sub
+    sub_object = Item.objects.filter(name=sub_name)
+
+    # if the item has an entry with corresponding size, fetch it
+    if (sub_object.filter(size__name__contains=sub_size).exists()):
+        sub_object = sub_object.get(size__name__contains=sub_size)
+    # else, just fetch the object by name
+    else:
+        sub_object = Item.objects.get(name=sub_name)
 
     return sub_object
 

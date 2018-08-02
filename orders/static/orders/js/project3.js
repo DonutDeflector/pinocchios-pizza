@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   //
 
   // AJAX request sent to add selected item cart
-  document.querySelectorAll(".menu-item").forEach(element => {
+  document.querySelectorAll(".btn-add-to-cart").forEach(element => {
     element.addEventListener("click", () => {
       const item_id = element.dataset.item_id;
 
@@ -107,24 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
         request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
 
         request.onload = () => {
-          // parse data, extract item number
-          const data = JSON.parse(request.responseText);
-          const quantity = data["quantity"];
-          const total_price = data["total_price"];
-
           const item = $(
             `.shopping-cart-item[data-item_number=${item_number}][data-item_type=${item_type}]`
           );
-
           item.remove();
 
-          // set popup message title and content
-          const title = "Success!";
-          const content = "Item removed from cart.";
-
-          generate_popup_message(title, content);
-          display_shopping_cart_quantity(quantity);
-          display_shopping_cart_total_price(total_price);
+          location.reload();
         };
 
         const data = JSON.stringify({
@@ -255,9 +243,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // customize sub
   //
 
-  // get the price of the sub and its addons on page load
-  fetch_sub_price();
-  fetch_sub_addons();
+  // if sub form exists get the price of the sub and its addons on page load
+  if (document.querySelector("#sub-form")) {
+    fetch_sub_price();
+    fetch_sub_addons();
+    check_sub_sizes();
+  }
 
   // when the form is altered, fetch the price of the pizza
   // done in this fashion due to DOM limitations with dynamically added elements
@@ -266,9 +257,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // when the sub name is changed, fetch the sub's custom addons
-  document.querySelector("#sub-name").onchange = () => {
-    fetch_sub_addons();
-  };
+  if (document.querySelector("#sub-name")) {
+    document.querySelector("#sub-name").onchange = () => {
+      fetch_sub_addons();
+      check_sub_sizes();
+    };
+  }
 
   // check for existence of submit, adds the configured sub to the user's cart
   if (document.querySelector("#sub-submit-button")) {
@@ -311,35 +305,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // gets the price of the currently configured sub
   function fetch_sub_price() {
-    if (document.querySelector("#sub-form")) {
-      sub = fetch_configured_sub();
+    sub = fetch_configured_sub();
 
-      const request = new XMLHttpRequest();
+    const request = new XMLHttpRequest();
 
-      request.open("POST", "/customize_sub");
-      request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
+    request.open("POST", "/customize_sub");
+    request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
 
-      request.onload = () => {
-        const data = JSON.parse(request.responseText);
-        const sub_price = data["sub_price"];
+    request.onload = () => {
+      const data = JSON.parse(request.responseText);
+      const sub_price = data["sub_price"];
 
-        // display price of configured pizza
-        document.querySelector(".sub-price").innerHTML = "$" + sub_price;
-      };
+      // display price of configured pizza
+      document.querySelector(".sub-price").innerHTML = "$" + sub_price;
+    };
 
-      const data = JSON.stringify({
-        sub_name: sub.name,
-        sub_category: sub.category,
-        sub_size: sub.size,
-        sub_addons: sub.addons
-      });
+    const data = JSON.stringify({
+      sub_name: sub.name,
+      sub_category: sub.category,
+      sub_size: sub.size,
+      sub_addons: sub.addons
+    });
 
-      request.send(data);
-    }
+    request.send(data);
   }
 
   // get any custom addons for the selected sub
   function fetch_sub_addons() {
+    const sub_name = document.querySelector("#sub-name").value;
+
     const request = new XMLHttpRequest();
 
     request.open("POST", "/sub_addons");
@@ -366,9 +360,40 @@ document.addEventListener("DOMContentLoaded", () => {
         sub_addons_container.innerHTML += sub_custom_addon;
       }
     };
+    const data = JSON.stringify({
+      sub_name: sub_name
+    });
+
+    request.send(data);
+  }
+
+  // if there is no size option for the sub, the size select will be disabled
+  function check_sub_sizes() {
+    // fetch sub name and size
+    const sub_name = document.querySelector("#sub-name").value;
+
+    const request = new XMLHttpRequest();
+
+    request.open("POST", "/sub_sizes");
+    request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
+
+    request.onload = () => {
+      const data = JSON.parse(request.responseText);
+      const sub_sizes = data["sub_sizes"];
+
+      // capture sub size select
+      const sub_size_select = document.querySelector("#sub-size");
+
+      // if sub sizes returns true, don't disable the form; else disable it
+      if (sub_sizes) {
+        sub_size_select.disabled = false;
+      } else {
+        sub_size_select.disabled = true;
+      }
+    };
 
     const data = JSON.stringify({
-      sub_name: sub.name
+      sub_name: sub_name
     });
 
     request.send(data);

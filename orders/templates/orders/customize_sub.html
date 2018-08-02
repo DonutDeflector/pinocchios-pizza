@@ -3,6 +3,9 @@
 {% block title %} Customize Sub {% endblock %}
 
 {% block body %}
+
+  {% include "orders/includes/navbar.html" %}
+
 <div class="container">
   <form id="sub-form">
     <div class="form-group">
@@ -31,7 +34,7 @@
   </div>
 
   {% include "orders/includes/message.html" %}
-  {% include "orders/includes/shopping-cart-navbar.html" %}
+  {% include "orders/includes/shopping_cart_navbar.html" %}
 </div>
 
 {% endblock %}

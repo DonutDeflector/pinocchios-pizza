@@ -1,45 +1,76 @@
 {% extends "orders/layouts/default.html" %}
 
-{% block title %} Order {% endblock %}
+{% block title %} Menu {% endblock %}
 
 {% block body %}
+
+  {% include "orders/includes/navbar.html" %}
+
 <div class="container">
-  <a href="{% url 'logout' %}">Logout</a>
-  <div class="menu">
+  <h1 class="mb-3">Menu</h1>
+  <div class="menu accordion" id="category-accordion">
   {% for category in categories %}
-    <h2>{{ category }}</h2>
-    <ul>
-    {% if category.customizeable == True %}
-      <li class="menu-cutomizeable-order" data-category-id="{{ category.id }}">
-        {% if "Pizza" in category.name %}
-          <a href="{% url 'customize_pizza' %}">
-            Customize Order
-          </a>
-        {% else %}
-          <a href="{% url 'customize_sub' %}">
-            Customize Order
-          </a>
+    <div class="card">
+      <div class="card-header" id="{{ category | cut:' ' }}-heading">
+        <h2 class="mb-0">
+          <button class="category-title font-weight-bold btn btn-link collapsed" type="button"
+          data-toggle="collapse" data-target="#{{ category | cut:' ' }}-collapse"
+          aria-expanded="false" aria-controls="{{ category | cut:' ' }}-collapse">
+            {{ category }}
+          </button>
+        </h2>
+      </div>
+      <div id="{{ category | cut:' ' }}-collapse" class="collapse"
+      aria-labelledby="{{ category | cut:' ' }}-heading"
+      data-parent="#category-accordion">
+        <div class="card-body">
+        {% if category.customizeable == True %}
+          {% if "Pizza" in category.name %}
+            <a class="btn btn-primary" role="button" href="{% url 'customize_pizza' %}">
+              Customize Pizza
+            </a>
+          {% else %}
+            <a class="btn btn-primary" role="button" href="{% url 'customize_sub' %}">
+              Customize Sub
+            </a>
+          {% endif %}
+      {% else %}
+      <div class="table-responsive">
+        <table class="table">
+           <thead>
+            <tr>
+              <th scope="col">Item</th>
+              <th scope="col">Size</th>
+              <th scope="col">Price</th>
+              <th scope="col">Add to Cart</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for item in items %}
+            {% if item.category == category %}
+            <tr>
+              <th>{{ item }}</th>
+              <td>{{ item.size }}</td>
+              <td>${{ item.price }}</td>
+              <td>
+                <button class="btn btn-primary btn-add-to-cart"
+                data-item_id="{{ item.id }}">
+                  Add to Cart
+                </button>
+              </td>
+            </tr>
+            {% endif %}
+          {% endfor %}
+          </tbody>
         {% endif %}
-      </li>
-    {% else %}
-      {% for item in items %}
-        {% if item.category == category %}
-          <li class="menu-item" data-item_id="{{ item.id }}">
-            {{ item }} -
-            {{ item.size }} -
-            ${{ item.price }}
-          </li>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-    </ul>
+        </table>
+      </div>
+      </div>
+    </div>
   {% endfor %}
   </div>
-  
+
   {% include "orders/includes/message.html" %}
-  {% include "orders/includes/shopping-cart-navbar.html" %}
+  {% include "orders/includes/shopping_cart_navbar.html" %}
 </div>
-
-{% include "orders/includes/current_user_id.html" %}
-
 {% endblock %}

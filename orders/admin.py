@@ -1,11 +1,11 @@
 from django import forms
 from django.contrib import admin
-from .models import Category, Item, Size, Extra, ShoppingCart, Order, OrderStatus
+from .models import Category, Item, Size, Extra, ShoppingCart, Order, OrderHistory
 
 # Register your models here.
 admin.site.register(Size)
 admin.site.register(Order)
-admin.site.register(OrderStatus)
+admin.site.register(OrderHistory)
 
 
 class CategoryForm(admin.ModelAdmin):

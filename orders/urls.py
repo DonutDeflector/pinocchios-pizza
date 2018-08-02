@@ -12,6 +12,7 @@ urlpatterns = [
     path("add_pizza_to_cart", views.add_pizza_to_cart, name="add_pizza_to_cart"),
     path("customize_sub", views.customize_sub, name="customize_sub"),
     path("sub_addons", views.sub_addons, name="sub_addons"),
+    path("sub_sizes", views.sub_sizes, name="sub_sizes"),
     path("add_sub_to_cart", views.add_sub_to_cart, name="add_sub_to_cart"),
     path("shopping_cart", views.shopping_cart, name="shopping_cart"),
     path("shopping_cart_items", views.shopping_cart_items,
@@ -21,5 +22,7 @@ urlpatterns = [
     path("remove_item_from_cart", views.remove_item_from_cart,
          name="remove_item_from_cart"),
     path("order", views.order, name="order"),
-    path("submit_order", views.submit_order, name="submit_order")
+    path("submit_order", views.submit_order, name="submit_order"),
+    path("view_orders", views.view_orders, name="view_orders"),
+    path("order_history", views.order_history, name="order_history")
 ]

@@ -4,6 +4,8 @@
 
 {% block body %}
 
+  {% include "orders/includes/navbar.html" %}
+
 {% with action=True %}
 
 <div class="container">
@@ -11,17 +13,15 @@
     <div class="shopping-cart">
       {% include "orders/includes/item_tables.html" %}
     </div>
-  </div>
-  
+
+  {% if items or custom_items %}
+    <hr>
+    {% include "orders/includes/place_order_button.html" %}
+  {% endif %}
+
   {% include "orders/includes/message.html" %}
-  {% include "orders/includes/shopping-cart-navbar.html" %}
-  <div class="order-button-container">
-    <a href="{% url 'order' %}"><button id="order-button">Order</button></a>
-  </div>
+  {% include "orders/includes/shopping_cart_navbar.html" %}
 </div>
-
-  {% include "orders/includes/current_user_id.html" %}
-
 {% endwith %}
 
 {% endblock %}
