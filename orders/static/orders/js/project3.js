@@ -54,6 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   //
+  // submitting order
+  //
+
+  //
   // shopping cart navbar
   //
 
@@ -251,13 +255,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // customize sub
   //
 
-  // get the price of the sub on page load
+  // get the price of the sub and its addons on page load
   fetch_sub_price();
+  fetch_sub_addons();
 
   // when the form is altered, fetch the price of the pizza
-  $("#sub-form :input").change(() => {
+  // done in this fashion due to DOM limitations with dynamically added elements
+  $(".container").delegate("#sub-form :input", "change", () => {
     fetch_sub_price();
   });
+
+  // when the sub name is changed, fetch the sub's custom addons
+  document.querySelector("#sub-name").onchange = () => {
+    fetch_sub_addons();
+  };
 
   // check for existence of submit, adds the configured sub to the user's cart
   if (document.querySelector("#sub-submit-button")) {
@@ -289,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = JSON.stringify({
           sub_name: sub.name,
+          sub_category: sub.category,
           sub_size: sub.size,
           sub_addons: sub.addons
         });
@@ -300,7 +312,66 @@ document.addEventListener("DOMContentLoaded", () => {
   // gets the price of the currently configured sub
   function fetch_sub_price() {
     if (document.querySelector("#sub-form")) {
+      sub = fetch_configured_sub();
+
+      const request = new XMLHttpRequest();
+
+      request.open("POST", "/customize_sub");
+      request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
+
+      request.onload = () => {
+        const data = JSON.parse(request.responseText);
+        const sub_price = data["sub_price"];
+
+        // display price of configured pizza
+        document.querySelector(".sub-price").innerHTML = "$" + sub_price;
+      };
+
+      const data = JSON.stringify({
+        sub_name: sub.name,
+        sub_category: sub.category,
+        sub_size: sub.size,
+        sub_addons: sub.addons
+      });
+
+      request.send(data);
     }
+  }
+
+  // get any custom addons for the selected sub
+  function fetch_sub_addons() {
+    const request = new XMLHttpRequest();
+
+    request.open("POST", "/sub_addons");
+    request.setRequestHeader("X-CSRFToken", cookies["csrftoken"]);
+
+    request.onload = () => {
+      // parse data, extract addons
+      const data = JSON.parse(request.responseText);
+      const sub_addons = data["sub_addons"];
+
+      const sub_addons_container = document.querySelector(".sub-addons");
+
+      sub_addons_container.innerHTML = "";
+
+      for (sub_addon in sub_addons) {
+        const sub_custom_addons_template = Handlebars.compile(
+          document.querySelector("#sub-custom-addon-template").innerHTML
+        );
+
+        const sub_custom_addon = sub_custom_addons_template({
+          addon: sub_addons[sub_addon]
+        });
+
+        sub_addons_container.innerHTML += sub_custom_addon;
+      }
+    };
+
+    const data = JSON.stringify({
+      sub_name: sub.name
+    });
+
+    request.send(data);
   }
 
   // fetch name, size, and addons of configured sub

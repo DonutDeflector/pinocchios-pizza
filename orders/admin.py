@@ -1,9 +1,11 @@
 from django import forms
 from django.contrib import admin
-from .models import Category, Item, Size, Extra, ShoppingCart
+from .models import Category, Item, Size, Extra, ShoppingCart, Order, OrderStatus
 
 # Register your models here.
 admin.site.register(Size)
+admin.site.register(Order)
+admin.site.register(OrderStatus)
 
 
 class CategoryForm(admin.ModelAdmin):
@@ -59,7 +61,7 @@ admin.site.register(Item, ItemAdmin)
 
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ["username"]
-    search_fields = ["name"]
+    search_fields = ["username"]
 
 
 admin.site.register(ShoppingCart, ShoppingCartAdmin)

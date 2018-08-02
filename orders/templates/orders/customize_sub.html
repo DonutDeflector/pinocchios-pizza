@@ -18,21 +18,17 @@
           <option>Large</option>
         </select>
       <div class="sub-addons">
-        {% for addon in addons %}
-          <div class="custom-control custom-checkbox">
-            <input value="{{ addon }}" type="checkbox" class="sub-addon
-            custom-control-input" id="{{ addon }}">
-            <label class="custom-control-label" for="{{ addon }}">
-              {{ addon }}
-            </label>
-          </div>
-        {% endfor %}
+        <label for="sub-addons">Sub Addons</label>
       </div>
       <div class="sub-submit-button-container">
         <button id="sub-submit-button" type="button">Add to Cart</button>
       </div>
     </div>
   </form>
+  
+  <div class="sub-price-container">
+    <span class="sub-price"></span>
+  </div>
 
   {% include "orders/includes/message.html" %}
   {% include "orders/includes/shopping-cart-navbar.html" %}

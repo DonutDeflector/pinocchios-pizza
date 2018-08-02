@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db.models import Q
 
-from .models import Category, Item, ShoppingCart, Extra
+from .models import Category, Item, ShoppingCart, Extra, Order
 
 from operator import and_
 from functools import reduce
@@ -185,7 +185,52 @@ def add_pizza_to_cart(request):
 def customize_sub(request):
     # for posts requests, fetch the price of the customized sub
     if request.method == "POST":
-        return HttpResponse("aa")
+        # fetch current user
+        current_user = request.user
+
+        # capture ajax request data
+        data = json.loads(request.body)
+
+        # fetch sub item in database
+        sub_object = fetch_sub_item(data)
+
+        # fetch the price of the sub
+        sub_price = sub_object.price
+
+        # fetch the sub addons
+        sub_addons = data["sub_addons"]
+        print(sub_addons)
+
+        # create dict to store sub properties
+        sub = {}
+
+        # add sub properties to dict
+        sub["name"] = str(sub_object.name)
+        sub["category"] = str(sub_object.category)
+        sub["size"] = str(sub_object.size)
+        sub["price"] = "{:.2f}".format(sub_object.price)
+        sub["sub_addons"] = sub_addons
+
+        # fetch name of sub
+        sub_name = data["sub_name"]
+
+        # declare addon total in anticipation
+        addon_total = None
+
+        # fetch the prices of the sub's custom addons
+        for sub_addon in sub_addons:
+            print(Extra.objects.filter(categories__name=sub_name))
+
+        # add the prices of the addons into the base price of the sub
+
+        # fetch the quantity and total price of items in the cart
+        quantity = get_quantity(request)
+        total_price = get_total_price(request)
+
+        return JsonResponse({"quantity": quantity,
+                             "total_price": total_price,
+                             "sub_price": sub_price})
+
     # for get requests, generate the sub customization form
     else:
         # get current user
@@ -207,7 +252,7 @@ def customize_sub(request):
         # set array in anticipation for addons
         addons = []
 
-        # fetch toppings from extras
+        # fetch addons from extras
         for extra in extras:
             if "Subs" in extra.get_categories():
                 addon = extra.name
@@ -225,6 +270,35 @@ def customize_sub(request):
         }
 
         return render(request, "orders/customize_sub.html", context)
+
+
+def sub_addons(request):
+    if request.method == "POST":
+        # capture ajax request data
+        data = json.loads(request.body)
+
+        # fetch the name of the sub
+        sub_name = data["sub_name"]
+
+        # fetch all extras and turn the QuerySet into a list
+        extras = Extra.objects.all()
+        list(extras)
+
+        # set list in anticipation for generic addons
+        addons = []
+
+        # fetch generic addons from extras
+        for extra in extras:
+            if "Subs" in extra.get_categories():
+                addon = extra.name
+                addons.append(addon)
+
+        # add custom addons to addons list
+        # addons.extend(sub_custom_addons)
+
+        return JsonResponse({"sub_addons": addons})
+    else:
+        return HttpResponseForbidden
 
 
 def add_sub_to_cart(request):
@@ -262,7 +336,6 @@ def add_sub_to_cart(request):
                     price = Decimal(sub["price"])
                     price = price + extra.price
                     sub["price"] = price
-                    print(sub["price"])
 
         # fetch shopping cart of the current user
         shopping_cart = fetch_shopping_cart(current_user)
@@ -402,6 +475,86 @@ def remove_item_from_cart(request):
     total_price = get_total_price(request)
 
     return JsonResponse({"quantity": quantity, "total_price": total_price})
+
+
+def order(request):
+    # check to see if user is logged in, redirect to login if not
+    authentication_check(request)
+
+    # get current user
+    current_user = request.user
+
+    # get user's cart
+    shopping_cart = fetch_shopping_cart(current_user)
+
+    # if the cart is empty, redirect user to main page
+    if (shopping_cart.items == None) and (shopping_cart.custom_items == None):
+        return render(request, "orders/message.html",
+                      {"title": "Error!",
+                       "message": "Cart empty! Please make a selection before \
+                       proceeding."})
+    else:
+        # find total price of items in shopping cart
+        total_price = get_total_price(request)
+
+        # get all of the item ids in the cart
+        item_id_list = shopping_cart.get_items()
+
+        # create array to contain items and their properties
+        items = []
+
+        # get properties of all items in the cart and add them to a list
+        for item_id in item_id_list:
+            # create dict to store item properties in
+            item_dict = {}
+
+            # get item properties
+            item = Item.objects.get(pk=item_id)
+
+            # add properties to item dict
+            item_dict["id"] = item.id
+            item_dict["name"] = item.name
+            item_dict["category"] = str(item.category)
+            item_dict["size"] = str(item.size)
+            item_dict["price"] = str(item.price)
+
+            # add item dict to items array
+            items.append(item_dict)
+
+        # sort items by name
+        items.sort(key=operator.itemgetter("name"))
+
+        # get all of the custom items in the cart
+        custom_items = shopping_cart.get_custom_items()
+
+        context = {
+            "items": items,
+            "custom_items": custom_items,
+            "total_price": total_price
+        }
+
+    return render(request, "orders/order.html", context)
+
+
+def submit_order(request):
+    # get current user
+    current_user = request.user
+
+    # get user's cart
+    shopping_cart = fetch_shopping_cart(current_user)
+
+    # copy shopping cart contents to orders
+    order = Order.objects.create(
+        username=current_user, items=shopping_cart.items,
+        custom_items=shopping_cart.custom_items)
+    order.save()
+
+    # destroy shopping cart item
+    shopping_cart.delete()
+
+    return render(request, "orders/message.html",
+                  {"title": "Success!",
+                   "message": "Order has been placed!"})
 
 ####################
 # helper functions #
