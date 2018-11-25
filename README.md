@@ -56,6 +56,8 @@ I found this snippet useful for sending AJAX requests with the CSRF token.
 
 ## Superuser Credentials
 
+Clone the `local-demo` branch to try it out on your machine.
+
 username: `admin`
 password: `pizza2018`
 
