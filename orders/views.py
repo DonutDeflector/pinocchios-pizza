@@ -17,8 +17,8 @@ import operator
 
 def index(request):
     # check to see if user is logged in, redirect to login if not
-    authentication_check(request)
-
+    if not request.user.is_authenticated:
+        return redirect("login")
     # gets total price of items in cart
     total_price = get_total_price(request)
 
@@ -392,7 +392,8 @@ def shopping_cart(request):
         return True
     else:
         # check to see if user is logged in, redirect to login if not
-        authentication_check(request)
+        if not request.user.is_authenticated:
+            return redirect("login")
 
         # find total price of items in shopping cart
         total_price = get_total_price(request)
@@ -508,7 +509,8 @@ def remove_item_from_cart(request):
 
 def order(request):
     # check to see if user is logged in, redirect to login if not
-    authentication_check(request)
+    if not request.user.is_authenticated:
+        return redirect("login")
 
     # get current user
     current_user = request.user
@@ -657,7 +659,8 @@ def view_orders(request):
 
 def order_history(request):
     # check to see if user is logged in
-    authentication_check(request)
+    if not request.user.is_authenticated:
+        return redirect("login")
 
     # get current user
     current_user = request.user
@@ -726,12 +729,6 @@ def order_history(request):
 ####################
 # helper functions #
 ####################
-
-
-def authentication_check(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
 
 def get_total_price(request):
     # get current user
