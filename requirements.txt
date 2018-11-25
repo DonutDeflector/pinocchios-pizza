@@ -1,5 +1,5 @@
 Django
 jsonfield
 gunicorn
-psycopg2
+psycopg2-binary
 django-heroku
